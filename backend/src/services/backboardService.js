@@ -1012,7 +1012,10 @@ async function analyzeMealPhoto(user, imageFile) {
 async function generateWorkoutSuggestions(user, memory, meals) {
   try {
     const content = [
-      "Given this memory and recent meals, suggest 3 practical workouts for the next few days.",
+      "Given this user profile, memory, and recent meals, suggest 3 fresh practical workouts for the next few days.",
+      "Make each suggestion specific and different from the others. Include a clear name, duration, and the actual activity plan in each string.",
+      "Example style: \"Gentle Strength Circuit (22 min): chair squats, wall pushups, glute bridges, and a relaxed cooldown.\"",
+      `User profile (JSON): ${truncateForPrompt(JSON.stringify(user || {}), 4000)}`,
       `Memory (JSON): ${truncateForPrompt(JSON.stringify(asArray(memory)), 8000)}`,
       `Meals (JSON): ${truncateForPrompt(JSON.stringify(asArray(meals)), 8000)}`,
       'Reply with JSON only: {"suggestions": string[]}',

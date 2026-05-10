@@ -145,11 +145,31 @@ export async function regenerateWorkout(userId, workoutId) {
   return request(
     `/users/${requireUserId(userId)}/workout-plan/regenerate`,
     { method: 'POST', body: JSON.stringify({ workoutId }) },
-    {
-      id: `fresh-${Date.now()}`,
-      title: 'Fresh Mobility Flow',
-      activity: 'Easy hip openers, shoulder mobility, and relaxed core activation.',
-      duration: '18 min',
+    () => {
+      const options = [
+        {
+          title: 'Steady Strength Circuit',
+          activity: 'Chair squats, wall pushups, glute bridges, and a relaxed cooldown.',
+          duration: '24 min',
+        },
+        {
+          title: 'Energy Walk Reset',
+          activity: 'A comfortable walk with three short pace pickups and two minutes of breathing.',
+          duration: '28 min',
+        },
+        {
+          title: 'Yoga Mobility Flow',
+          activity: 'A gentle yoga-inspired flow for hips, shoulders, and back.',
+          duration: '20 min',
+        },
+      ];
+      const workout = options[Math.floor(Math.random() * options.length)];
+      return {
+        id: `fresh-${Date.now()}`,
+        ...workout,
+        completed: false,
+        source: 'frontend-fallback',
+      };
     },
   );
 }

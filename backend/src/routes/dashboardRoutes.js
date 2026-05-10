@@ -1,6 +1,73 @@
 const express = require('express');
 const router = express.Router();
 const storage = require('../services/storageService');
+const { generateWorkoutSuggestions } = require('../services/backboardService');
+
+function pickFallbackWorkout(user, workoutId) {
+  const preference = user.workoutPreferences || 'gentle movement';
+  const options = [
+    {
+      title: 'Steady Strength Circuit',
+      activity: `A repeatable low-impact strength session: chair squats, wall pushups, glute bridges, and a relaxed cooldown based on your preference for ${preference}.`,
+      duration: '24 min'
+    },
+    {
+      title: 'Energy Walk Reset',
+      activity: `A comfortable walk with three short pace pickups, then two minutes of breathing to support steady energy.`,
+      duration: '28 min'
+    },
+    {
+      title: 'Yoga Mobility Flow',
+      activity: `A gentle yoga-inspired flow for hips, shoulders, and back, keeping intensity easy and sustainable.`,
+      duration: '20 min'
+    },
+    {
+      title: 'Core And Stretch Break',
+      activity: `Dead bugs, side bends, cat-cow, and hamstring stretches for a short session that fits a busy day.`,
+      duration: '16 min'
+    },
+    {
+      title: 'Low-Impact Cardio Mix',
+      activity: `Step touches, marching, easy shadow boxing, and a cooldown without jumping or high strain.`,
+      duration: '18 min'
+    }
+  ];
+  const index = Math.abs(`${workoutId || ''}-${Date.now()}`.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0)) % options.length;
+  return options[index];
+}
+
+function workoutFromSuggestion(suggestion, user, workoutId, source) {
+  const text =
+    typeof suggestion === 'string'
+      ? suggestion
+      : suggestion?.activity || suggestion?.title || suggestion?.description || '';
+  const fallback = pickFallbackWorkout(user, workoutId);
+  const cleanText = String(text || '').trim();
+  const durationMatch = cleanText.match(/(\d{1,3}\s*(?:min|minute|minutes))/i);
+  const duration = suggestion?.duration || suggestion?.estimatedDuration || durationMatch?.[1] || fallback.duration;
+  const title =
+    suggestion?.title ||
+    cleanText
+      .replace(durationMatch?.[0] || '', '')
+      .replace(/\(\s*\)/g, '')
+      .split(/[:.-]/)[0]
+      .trim()
+      .slice(0, 48) ||
+    fallback.title;
+  const activity = suggestion?.activity || suggestion?.activityDescription || cleanText || fallback.activity;
+
+  return {
+    id: `fresh-${Date.now()}`,
+    title,
+    activity,
+    duration,
+    completed: false,
+    activityDescription: activity,
+    estimatedDuration: duration,
+    status: 'suggested',
+    source
+  };
+}
 
 // GET /api/users/:userId/daily-nutrition
 router.get('/:userId/daily-nutrition', (req, res) => {
@@ -153,7 +220,7 @@ router.post('/:userId/workout-plan/complete', (req, res) => {
 });
 
 // POST /api/users/:userId/workout-plan/regenerate
-router.post('/:userId/workout-plan/regenerate', (req, res) => {
+router.post('/:userId/workout-plan/regenerate', async (req, res) => {
   const { workoutId } = req.body || {};
   const user = storage.getUser(req.params.userId);
 
@@ -161,18 +228,11 @@ router.post('/:userId/workout-plan/regenerate', (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  const workout = {
-    id: `fresh-${Date.now()}`,
-    title: 'Fresh Mobility Flow',
-    activity: `Easy mobility, relaxed core activation, and light movement based on your preference for ${user.workoutPreferences || 'gentle exercise'}.`,
-    duration: '18 min',
-    completed: false,
-
-    activityDescription: `Easy mobility, relaxed core activation, and light movement based on your preference for ${user.workoutPreferences || 'gentle exercise'}.`,
-    estimatedDuration: '18 min',
-    status: 'suggested',
-    source: 'mock-fallback'
-  };
+  const memory = storage.getMemory(req.params.userId) || [];
+  const meals = storage.getMealsByUser(req.params.userId) || [];
+  const result = await generateWorkoutSuggestions(user, memory, meals);
+  const suggestion = result.suggestions?.[0] || pickFallbackWorkout(user, workoutId);
+  const workout = workoutFromSuggestion(suggestion, user, workoutId, result.source || 'mock-fallback');
 
   storage.replaceWorkoutPlan(req.params.userId, workoutId, workout);
 
