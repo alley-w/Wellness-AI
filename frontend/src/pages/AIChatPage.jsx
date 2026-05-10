@@ -39,29 +39,30 @@ export default function AIChatPage() {
     setSending(false);
   }
 
-  const memorySections = [
-    ['Remembered preferences', memory?.rememberedPreferences],
-    ['Remembered goals', memory?.rememberedGoals],
-    ['Remembered patterns', memory?.rememberedPatterns],
-    ['Recent insights', memory?.recentInsights],
+  const memoryChips = [
+    ...(memory?.rememberedPreferences || []).slice(0, 2),
+    ...(memory?.rememberedGoals || []).slice(0, 2),
+    ...(memory?.rememberedPatterns || []).slice(0, 1),
   ];
+  const recentInsight = memory?.recentInsights?.[0] || 'Loading your saved wellness context...';
 
   return (
     <div className="page chat-layout">
       <ChatBox messages={messages} input={input} setInput={setInput} onSend={handleSend} sending={sending} />
       <aside className="panel memory-card">
-        <p className="eyebrow">What I Remember About You</p>
-        <h2>Personal context</h2>
-        {memorySections.map(([title, items]) => (
-          <div key={title} className="memory-section">
-            <h3>{title}</h3>
-            <ul>
-              {(items || ['Loading...']).map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div>
+          <p className="eyebrow">Memory Snapshot</p>
+          <h2>I remember</h2>
+        </div>
+        <div className="memory-chips">
+          {(memoryChips.length ? memoryChips : ['Loading...']).map((item) => (
+            <span key={item}>{item}</span>
+          ))}
+        </div>
+        <div className="memory-insight">
+          <strong>Recent insight</strong>
+          <p>{recentInsight}</p>
+        </div>
       </aside>
     </div>
   );

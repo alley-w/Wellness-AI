@@ -1,7 +1,7 @@
 const colors = {
-  protein: '#3b82f6',
-  carbs: '#10b981',
-  fat: '#f59e0b',
+  protein: '#8bb9ff',
+  carbs: '#8ee6c6',
+  fat: '#ffc978',
 };
 
 const labels = {
