@@ -1,0 +1,85 @@
+{
+  "description": "Expected HTTP API for a frontend talking to this backend (port 5001 by default). No frontend lives in this repo yet — use this as the integration contract.",
+  "baseUrlEnv": "VITE_API_URL | REACT_APP_API_URL | NEXT_PUBLIC_API_URL",
+  "defaultBaseUrl": "http://localhost:5001",
+  "endpoints": [
+    {
+      "name": "health",
+      "method": "GET",
+      "path": "/health",
+      "response": { "ok": true }
+    },
+    {
+      "name": "aiChat",
+      "method": "POST",
+      "path": "/api/ai/chat",
+      "body": { "userId": "string", "message": "string" },
+      "response": {
+        "reply": "string",
+        "memoryUsed": ["string"],
+        "source": "backboard | mock-fallback"
+      }
+    },
+    {
+      "name": "analyzeGoals",
+      "method": "POST",
+      "path": "/api/ai/analyze-goals",
+      "body": {
+        "userId": "string",
+        "healthGoal": "string",
+        "workoutPreferences": "string | string[]"
+      },
+      "response": {
+        "goalSummary": "string",
+        "rememberedGoals": ["string"],
+        "recommendedFocus": ["string"],
+        "recommendedWorkoutTypes": ["string"],
+        "source": "backboard | mock-fallback"
+      }
+    },
+    {
+      "name": "analyzeMealPhoto",
+      "method": "POST",
+      "path": "/api/ai/analyze-meal-photo",
+      "bodyType": "multipart/form-data",
+      "fields": { "userId": "string", "image": "file" },
+      "response": {
+        "foodItems": ["string"],
+        "calories": 0,
+        "protein": 0,
+        "carbs": 0,
+        "fat": 0,
+        "confidence": "low | medium | high",
+        "notes": "string",
+        "personalizedSuggestion": "string",
+        "memoryUsed": ["string"],
+        "source": "backboard | mock-fallback"
+      }
+    },
+    {
+      "name": "userMemory",
+      "method": "GET",
+      "path": "/api/users/:userId/memory",
+      "response": {
+        "rememberedPreferences": ["string"],
+        "rememberedGoals": ["string"],
+        "rememberedPatterns": ["string"],
+        "recentInsights": ["string"]
+      }
+    },
+    {
+      "name": "userGeneralReport",
+      "method": "GET",
+      "path": "/api/users/:userId/general-report",
+      "response": {
+        "summary": "string",
+        "rememberedHabits": ["string"],
+        "nutritionPatterns": ["string"],
+        "workoutPatterns": ["string"],
+        "improvements": ["string"],
+        "nextSteps": ["string"],
+        "source": "backboard | mock-fallback"
+      }
+    }
+  ]
+}

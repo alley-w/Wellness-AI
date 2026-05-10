@@ -1,83 +1,149 @@
-const express = require('express');
+const express = require("express");
+const multer = require("multer");
+const {
+  analyzeGoals,
+  chatWithAI,
+  analyzeMealPhoto,
+} = require("../services/backboardService");
+const storageService = require("../services/storageService");
+
 const router = express.Router();
-const storage = require('../services/storageService');
 
-// POST /api/ai/analyze-goals
-router.post('/analyze-goals', (req, res) => {
-  const { userId, goalText } = req.body;
+const mealPhotoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 12 * 1024 * 1024 },
+});
 
-  const user = storage.getUser(userId);
+function buildSupportiveFallback(message, memory, meals, workouts) {
+  const memoryNote = memory.length
+    ? `I remember ${memory.length} recent notes about your progress.`
+    : "I do not have much history yet, which is okay.";
+  const mealNote = meals.length
+    ? `You have logged ${meals.length} recent meal entries.`
+    : "No recent meals are logged yet.";
+  const workoutNote = workouts.length
+    ? `You have ${workouts.length} recent workout entries.`
+    : "No recent workouts are logged yet.";
 
-  if (userId && user) {
-    storage.saveMemory(userId, {
-      type: 'goal',
-      text: goalText || user.healthGoal || 'User wants steady wellness progress.'
+  return [
+    `Thanks for sharing: "${message}".`,
+    memoryNote,
+    mealNote,
+    workoutNote,
+    "A practical next step: pick one realistic action for today, like a short walk, water refill, or balanced meal.",
+    "You are building progress, and consistency matters more than perfection.",
+  ].join(" ");
+}
+
+router.post("/chat", async (req, res) => {
+  try {
+    const { userId, message } = req.body || {};
+
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ error: "Missing or invalid userId." });
+    }
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ error: "Message cannot be empty." });
+    }
+
+    const memory = storageService.getMemoryByUserId(userId);
+    const meals = storageService.getMealsByUserId(userId);
+    const workouts = storageService.getWorkoutsByUserId(userId);
+
+    const context = {
+      storedMemory: memory.slice(-14),
+      recentMeals: meals.slice(-12),
+      recentWorkouts: workouts.slice(-12),
+    };
+
+    const aiResponse = await chatWithAI({ userId }, message.trim(), context);
+    let reply = (aiResponse?.reply || "").trim();
+    const memoryUsed = Array.isArray(aiResponse?.memoryUsed)
+      ? aiResponse.memoryUsed.map((x) => String(x).trim()).filter(Boolean)
+      : [];
+    if (!reply) {
+      reply = buildSupportiveFallback(message.trim(), memory, meals, workouts);
+    }
+
+    await storageService.saveMemory(userId, {
+      type: "chat",
+      userMessage: message.trim(),
+      assistantReply: reply,
+      memoryUsedSnapshot: memoryUsed,
+      source: aiResponse?.source || "mock-fallback",
+    });
+
+    return res.json({
+      reply,
+      memoryUsed,
+      source: aiResponse?.source || "mock-fallback",
+    });
+  } catch (_error) {
+    return res.status(200).json({
+      reply:
+        "I am here with you. Let's take one supportive, practical step right now, such as hydration, a short walk, or a balanced next meal.",
+      memoryUsed: [],
+      source: "mock-fallback",
     });
   }
-
-  res.json({
-    summary:
-      'Your goals point toward sustainable energy, enjoyable movement, and meals that respect your preferences. A gradual routine is likely to serve you best.',
-    goalSummary:
-      'Your goals point toward sustainable energy, enjoyable movement, and meals that respect your preferences.',
-    rememberedGoals: [
-      goalText || user?.healthGoal || 'Build steady energy'
-    ],
-    recommendedFocus: [
-      'Keep meals balanced',
-      'Choose repeatable movement',
-      'Use gentle consistency'
-    ],
-    recommendedWorkoutTypes: [
-      user?.workoutPreferences || 'walking',
-      'stretching'
-    ],
-    source: 'mock-fallback'
-  });
 });
 
-// POST /api/ai/analyze-meal-photo
-router.post('/analyze-meal-photo', (req, res) => {
-  // For now this is mock fallback. Person 3 can replace this with Backboard image analysis.
-  res.json({
-    foodItems: ['Grilled salmon', 'Brown rice', 'Roasted broccoli'],
-    calories: 610,
-    protein: 42,
-    carbs: 54,
-    fat: 25,
-    confidence: 0.86,
-    notes: 'Looks balanced and protein-rich. Portion size is estimated.',
-    personalizedSuggestion:
-      'This meal looks protein-forward and balanced. You can edit the numbers before saving.',
-    memoryUsed: [],
-    source: 'mock-fallback'
-  });
-});
+router.post("/analyze-goals", async (req, res) => {
+  try {
+    const { userId, healthGoal, workoutPreferences } = req.body || {};
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ error: "Missing or invalid userId." });
+    }
 
-// POST /api/ai/chat
-router.post('/chat', (req, res) => {
-  const { userId, message } = req.body;
+    const result = await analyzeGoals({ userId }, healthGoal, workoutPreferences);
 
-  if (!message) {
-    return res.status(400).json({ error: 'message is required' });
-  }
-
-  const user = storage.getUser(userId);
-  const memories = userId ? storage.getMemory(userId) || [] : [];
-
-  if (userId && user) {
-    storage.saveMemory(userId, {
-      type: 'chat',
-      text: `User asked: ${message}`
+    return res.json(result);
+  } catch (_error) {
+    return res.status(200).json({
+      goalSummary:
+        "We could not reach the AI service, but you can still pick one small wellness step for today. This is not medical advice.",
+      rememberedGoals: [],
+      recommendedFocus: ["Gentle movement", "Hydration", "Consistent sleep"],
+      recommendedWorkoutTypes: ["Walking", "Stretching", "Light strength"],
+      source: "mock-fallback",
     });
   }
-
-  res.json({
-    reply:
-      `I hear you. Based on what I remember${user ? ` about ${user.name}` : ''}, a small steady choice today may help more than a perfect plan.`,
-    memoryUsed: memories.map((memory) => memory.text).filter(Boolean),
-    source: 'mock-fallback'
-  });
 });
+
+router.post(
+  "/analyze-meal-photo",
+  mealPhotoUpload.single("image"),
+  async (req, res) => {
+    try {
+      const userId = req.body?.userId;
+      if (!userId || typeof userId !== "string") {
+        return res.status(400).json({ error: "Missing or invalid userId." });
+      }
+      if (!req.file || !req.file.buffer) {
+        return res
+          .status(400)
+          .json({ error: "Missing image file (use form field name: image)." });
+      }
+
+      const result = await analyzeMealPhoto({ userId }, req.file);
+      return res.json(result);
+    } catch (_error) {
+      return res.status(200).json({
+        foodItems: [],
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        confidence: "low",
+        notes:
+          "Could not complete meal analysis. Try again with a clearer photo or smaller file.",
+        personalizedSuggestion:
+          "A short walk or glass of water after eating is a simple supportive habit.",
+        memoryUsed: [],
+        source: "mock-fallback",
+      });
+    }
+  }
+);
 
 module.exports = router;
