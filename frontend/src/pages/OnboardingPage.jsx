@@ -49,28 +49,28 @@ export default function OnboardingPage({ onComplete }) {
   }
 
   const fields = [
-    { name: 'name', label: 'Name', type: 'text', placeholder: 'Alex' },
-    { name: 'age', label: 'Age', type: 'text', inputMode: 'numeric', placeholder: '32' },
-    { name: 'heightCm', label: 'Height (cm)', type: 'text', inputMode: 'decimal', placeholder: '168' },
-    { name: 'weightKg', label: 'Weight (kg)', type: 'text', inputMode: 'decimal', placeholder: '68' },
+    { name: 'name', label: 'Name', type: 'text', placeholder: 'e.g. Alex' },
+    { name: 'age', label: 'Age', type: 'text', inputMode: 'numeric', placeholder: 'e.g. 32' },
+    { name: 'heightCm', label: 'Height (cm)', type: 'text', inputMode: 'decimal', placeholder: 'e.g. 168' },
+    { name: 'weightKg', label: 'Weight (kg)', type: 'text', inputMode: 'decimal', placeholder: 'e.g. 68' },
     {
       name: 'dietaryPreferences',
       label: 'Dietary preferences',
       type: 'text',
-      placeholder: 'Vegetarian, high-protein breakfasts, quick lunches',
+      placeholder: 'e.g. Vegetarian, high-protein breakfasts, quick lunches',
     },
-    { name: 'allergies', label: 'Allergies', type: 'text', placeholder: 'Peanuts, shellfish, dairy, or none' },
+    { name: 'allergies', label: 'Allergies', type: 'text', placeholder: 'e.g. Peanuts, shellfish, dairy, or none' },
     {
       name: 'healthGoal',
       label: 'Health goal',
       type: 'text',
-      placeholder: 'Build energy, improve strength, support digestion',
+      placeholder: 'e.g. Build energy, improve strength, support digestion',
     },
     {
       name: 'workoutPreferences',
       label: 'Workout preferences',
       type: 'text',
-      placeholder: 'Walking, yoga, low-impact strength, 20-minute sessions',
+      placeholder: 'e.g. Walking, yoga, low-impact strength, 20-minute sessions',
     },
   ];
 
