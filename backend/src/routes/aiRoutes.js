@@ -90,12 +90,16 @@ router.post("/chat", async (req, res) => {
 
 router.post("/analyze-goals", async (req, res) => {
   try {
-    const { userId, healthGoal, workoutPreferences } = req.body || {};
+    const { userId, healthGoal, goalText, workoutPreferences } = req.body || {};
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "Missing or invalid userId." });
     }
 
-    const result = await analyzeGoals({ userId }, healthGoal, workoutPreferences);
+    const result = await analyzeGoals(
+      { userId },
+      healthGoal || goalText,
+      workoutPreferences
+    );
 
     return res.json(result);
   } catch (_error) {
