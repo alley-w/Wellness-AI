@@ -1,6 +1,6 @@
 :root {
-  color: #25302f;
-  background: #f7f4ef;
+  color: #101014;
+  background: #ffffff;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -16,10 +16,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(135deg, rgba(79, 157, 143, 0.12), transparent 34%),
-    linear-gradient(315deg, rgba(241, 184, 107, 0.16), transparent 28%),
-    #f7f4ef;
+  background: #ffffff;
 }
 
 button,
@@ -29,8 +26,8 @@ input {
 
 button {
   border: 0;
-  border-radius: 8px;
-  background: #2f6f68;
+  border-radius: 10px;
+  background: #050413;
   color: #fff;
   cursor: pointer;
   font-weight: 700;
@@ -42,8 +39,8 @@ button {
 }
 
 button:hover:not(:disabled) {
-  background: #285f59;
-  box-shadow: 0 12px 26px rgba(47, 111, 104, 0.22);
+  background: #151426;
+  box-shadow: 0 12px 26px rgba(5, 4, 19, 0.18);
   transform: translateY(-1px);
 }
 
@@ -54,16 +51,16 @@ button:disabled {
 
 input {
   width: 100%;
-  border: 1px solid #d8d0c4;
-  border-radius: 8px;
-  background: #fffdf9;
-  color: #25302f;
+  border: 1px solid #dedee5;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #101014;
   padding: 0.82rem 0.9rem;
 }
 
 input:focus {
-  border-color: #4f9d8f;
-  box-shadow: 0 0 0 4px rgba(79, 157, 143, 0.14);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
   outline: none;
 }
 
@@ -75,9 +72,9 @@ p {
 }
 
 h1 {
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1.05;
-  margin-bottom: 1rem;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.1;
+  margin-bottom: 0.45rem;
 }
 
 h2 {
@@ -97,13 +94,12 @@ h3 {
 
 .navbar {
   align-items: center;
-  background: rgba(255, 253, 249, 0.86);
-  backdrop-filter: blur(18px);
-  border-bottom: 1px solid rgba(216, 208, 196, 0.7);
+  background: #ffffff;
+  border-bottom: 1px solid #e7e7ec;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
-  padding: 1rem clamp(1rem, 4vw, 3rem);
+  padding: 1.15rem clamp(1rem, 4vw, 2rem);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -111,14 +107,14 @@ h3 {
 
 .brand,
 .nav-link {
-  color: #25302f;
+  color: #101014;
   text-decoration: none;
 }
 
 .brand {
   align-items: center;
   display: inline-flex;
-  font-size: 1.1rem;
+  font-size: 1.18rem;
   font-weight: 800;
   gap: 0.6rem;
   white-space: nowrap;
@@ -126,42 +122,43 @@ h3 {
 
 .brand-mark {
   align-items: center;
-  background: #2f6f68;
-  border-radius: 8px;
+  background: #050413;
+  border-radius: 10px;
   color: #fff;
   display: inline-flex;
-  height: 2.1rem;
+  height: 2.65rem;
   justify-content: center;
-  width: 2.1rem;
+  width: 2.65rem;
 }
 
 .nav-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
+  gap: 0.7rem;
   justify-content: flex-end;
 }
 
 .nav-link {
-  border-radius: 8px;
-  font-size: 0.92rem;
+  border-radius: 10px;
+  color: #707080;
+  font-size: 1rem;
   font-weight: 700;
-  padding: 0.55rem 0.75rem;
+  padding: 0.75rem 1rem;
 }
 
 .nav-link.active,
 .nav-link:hover {
-  background: #e8f2ef;
-  color: #285f59;
+  background: #050413;
+  color: #ffffff;
 }
 
 .app-main {
-  padding: clamp(1.25rem, 4vw, 3rem);
+  padding: clamp(1.5rem, 4vw, 2rem);
 }
 
 .page {
   margin: 0 auto;
-  max-width: 1180px;
+  max-width: 1280px;
 }
 
 .narrow-page {
@@ -174,20 +171,17 @@ h3 {
 }
 
 .intro p {
-  color: #60706d;
+  color: #707080;
   font-size: 1.08rem;
 }
 
 .dashboard-intro {
-  align-items: end;
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: 1.2fr 0.8fr;
+  display: block;
   max-width: none;
 }
 
 .eyebrow {
-  color: #8a6a34;
+  color: #707080;
   font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0;
@@ -197,10 +191,10 @@ h3 {
 
 .panel,
 .card {
-  background: rgba(255, 253, 249, 0.92);
-  border: 1px solid rgba(216, 208, 196, 0.82);
-  border-radius: 8px;
-  box-shadow: 0 20px 55px rgba(79, 72, 58, 0.08);
+  background: #ffffff;
+  border: 1px solid #dedee5;
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .panel {
@@ -214,7 +208,9 @@ h3 {
 .form-grid,
 .metric-grid,
 .dashboard-grid,
+.dashboard-home-grid,
 .card-grid,
+.workout-list,
 .two-column,
 .profile-layout,
 .chat-layout {
@@ -232,7 +228,7 @@ h3 {
 }
 
 .input-group span {
-  color: #51605e;
+  color: #4d5560;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -246,9 +242,16 @@ h3 {
   gap: 1.2rem;
 }
 
-.dashboard-grid {
-  grid-template-columns: minmax(280px, 0.9fr) minmax(280px, 1.1fr);
-  margin-bottom: 2rem;
+.dashboard-grid,
+.dashboard-home-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 400px);
+  gap: 2rem;
+  align-items: start;
+}
+
+.dashboard-main-column {
+  display: grid;
+  gap: 2rem;
 }
 
 .nutrition-panel,
@@ -263,55 +266,102 @@ h3 {
   gap: 1.1rem;
 }
 
+.dashboard-page .summary-card {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+  padding: 2rem;
+}
+
+.dashboard-page .summary-card h2 {
+  align-items: center;
+  color: #1e3a8a;
+  display: flex;
+  gap: 0.65rem;
+}
+
+.dashboard-page .summary-card h2::before {
+  content: "*";
+  color: #2563eb;
+  font-size: 2rem;
+  line-height: 0.5;
+}
+
+.dashboard-page .summary-card p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+.nutrition-panel {
+  min-height: 540px;
+  padding: 2rem;
+}
+
 .pie-wrap {
   display: grid;
   place-items: center;
   position: relative;
 }
 
+.nutrition-visual {
+  display: grid;
+  justify-items: center;
+  padding: 1.5rem 0 0.5rem;
+}
+
 .pie-chart {
   aspect-ratio: 1;
   border-radius: 50%;
-  max-width: 230px;
-  width: 70%;
+  box-shadow: inset 0 0 0 2px #ffffff;
+  max-width: 220px;
+  width: min(70%, 220px);
 }
 
-.pie-total {
-  align-items: center;
-  background: #fffdf9;
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px #e5ded5;
-  display: flex;
-  flex-direction: column;
-  height: 44%;
-  justify-content: center;
-  left: 50%;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 44%;
-}
-
-.pie-total strong {
-  font-size: 1.35rem;
-}
-
-.pie-total span {
-  color: #60706d;
-  font-size: 0.8rem;
-}
-
-.legend {
+.calorie-total {
   display: grid;
-  gap: 0.55rem;
+  gap: 0.1rem;
+  justify-items: center;
+  padding: 1rem 0 0.75rem;
 }
 
-.legend-row {
-  align-items: center;
+.calorie-total span {
+  color: #707080;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.calorie-total strong {
+  color: #101014;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.macro-stats {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: auto 1fr auto;
-  text-transform: capitalize;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, 1fr);
+  text-align: center;
+}
+
+.macro-stat {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: center;
+}
+
+.macro-stat span {
+  color: #707080;
+  font-weight: 700;
+}
+
+.macro-stat strong {
+  font-size: 1.05rem;
+}
+
+.macro-stat small {
+  color: #8a8a98;
+  font-weight: 700;
 }
 
 .legend-dot {
@@ -329,27 +379,51 @@ h3 {
   max-width: 560px;
 }
 
+.section-heading h2 {
+  font-size: 1.9rem;
+  margin: 0;
+}
+
 .card-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .workout-card {
-  min-height: 230px;
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: auto;
+}
+
+.workout-card p {
+  color: #707080;
+  margin-bottom: 0;
+}
+
+.workout-card .eyebrow {
+  color: #707080;
+  font-size: 1rem;
+  text-transform: none;
+}
+
+.workout-list {
+  gap: 1rem;
 }
 
 .button-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  justify-content: flex-end;
 }
 
 .secondary-button {
-  background: #e8f2ef;
-  color: #285f59;
+  background: #ffffff;
+  border: 1px solid #dedee5;
+  color: #101014;
 }
 
 .secondary-button:hover:not(:disabled) {
-  background: #dcebe7;
+  background: #f5f7fb;
 }
 
 .two-column {
@@ -404,9 +478,9 @@ h3 {
 }
 
 .soft-note {
-  background: #eef5f2;
+  background: #eff6ff;
   border-radius: 8px;
-  color: #51605e;
+  color: #1d4ed8;
   margin: 0;
   padding: 0.9rem;
 }
@@ -451,7 +525,7 @@ h3 {
 
 .message.user {
   align-self: flex-end;
-  background: #2f6f68;
+  background: #050413;
   color: #fff;
 }
 
@@ -469,7 +543,7 @@ h3 {
 
 .memory-section,
 .report-section {
-  border-top: 1px solid #e5ded5;
+  border-top: 1px solid #e7e7ec;
   padding-top: 1rem;
 }
 
@@ -501,7 +575,7 @@ h3 {
 
 .profile-placeholder {
   align-items: center;
-  background: linear-gradient(135deg, #4f9d8f, #f1b86b);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
   color: #fff;
   display: flex;
   font-size: 4rem;
@@ -509,9 +583,92 @@ h3 {
   justify-content: center;
 }
 
-.report-sections {
+.report-sections,
+.report-metrics,
+.report-mini-grid {
   display: grid;
   gap: 1rem;
+}
+
+.report-card {
+  gap: 1.35rem;
+}
+
+.report-header p:last-child {
+  color: #707080;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.report-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.report-metric {
+  background: #f8fafc;
+  border: 1px solid #e7e7ec;
+  border-radius: 12px;
+  display: grid;
+  gap: 0.55rem;
+  padding: 1rem;
+}
+
+.report-metric span {
+  color: #707080;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.report-metric strong {
+  font-size: 1.35rem;
+}
+
+.progress-track {
+  background: #e8edf5;
+  border-radius: 999px;
+  height: 0.55rem;
+  overflow: hidden;
+}
+
+.progress-fill {
+  border-radius: inherit;
+  height: 100%;
+}
+
+.progress-fill.blue {
+  background: #3b82f6;
+}
+
+.progress-fill.green {
+  background: #10b981;
+}
+
+.progress-fill.orange {
+  background: #f59e0b;
+}
+
+.report-mini-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.report-mini-grid h3 {
+  margin-bottom: 0.7rem;
+}
+
+.pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.pill-list span {
+  background: #f5f7fb;
+  border: 1px solid #e7e7ec;
+  border-radius: 999px;
+  color: #4b5563;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
 }
 
 @media (max-width: 900px) {
@@ -526,6 +683,7 @@ h3 {
 
   .dashboard-intro,
   .dashboard-grid,
+  .dashboard-home-grid,
   .two-column,
   .chat-layout,
   .profile-layout {
@@ -566,5 +724,16 @@ h3 {
   .nav-link {
     font-size: 0.84rem;
     padding: 0.45rem 0.55rem;
+  }
+
+  .report-metrics,
+  .report-mini-grid,
+  .macro-stats,
+  .workout-card {
+    grid-template-columns: 1fr;
+  }
+
+  .button-row {
+    justify-content: flex-start;
   }
 }

@@ -8,10 +8,10 @@ export default function WorkoutSuggestionCard({ workout, onComplete, onRegenerat
       </div>
       <div className="button-row">
         <button type="button" className="secondary-button" onClick={() => onRegenerate(workout.id)} disabled={busy}>
-          Generate New
+          New
         </button>
         <button type="button" onClick={() => onComplete(workout.id)} disabled={busy || workout.completed}>
-          {workout.completed ? 'Completed' : 'Mark Complete'}
+          {workout.completed ? 'Completed' : 'Complete'}
         </button>
       </div>
     </article>

@@ -55,41 +55,39 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page dashboard-page">
       <section className="intro dashboard-intro">
-        <div>
-          <p className="eyebrow">Today</p>
-          <h1>Your wellness memory is taking shape.</h1>
-        </div>
-        <p>Small patterns count here: meals you repeat, movement you enjoy, and the routines that make energy feel steadier.</p>
+        <h1>Your Wellness Dashboard</h1>
+        <p>Track your progress and stay motivated</p>
       </section>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-home-grid">
+        <div className="dashboard-main-column">
+          <section className="panel summary-card">
+            <h2>Daily Summary</h2>
+            <p>{summary?.summary || 'Loading your daily summary...'}</p>
+          </section>
+
+          <section className="section-block">
+            <div className="section-heading">
+              <h2>Today's Workouts</h2>
+            </div>
+            <div className="workout-list">
+              {workouts.map((workout) => (
+                <WorkoutSuggestionCard
+                  key={workout.id}
+                  workout={workout}
+                  onComplete={handleComplete}
+                  onRegenerate={handleRegenerate}
+                  busy={busyWorkout === workout.id}
+                />
+              ))}
+            </div>
+          </section>
+        </div>
+
         {nutrition && <NutritionPieChart data={nutrition} />}
-        <section className="panel summary-card">
-          <p className="eyebrow">AI Daily Summary</p>
-          <h2>{summary?.title || 'Daily support'}</h2>
-          <p>{summary?.summary || 'Loading your daily summary...'}</p>
-        </section>
       </div>
-
-      <section className="section-block">
-        <div className="section-heading">
-          <p className="eyebrow">Movement</p>
-          <h2>Workout suggestions</h2>
-        </div>
-        <div className="card-grid">
-          {workouts.map((workout) => (
-            <WorkoutSuggestionCard
-              key={workout.id}
-              workout={workout}
-              onComplete={handleComplete}
-              onRegenerate={handleRegenerate}
-              busy={busyWorkout === workout.id}
-            />
-          ))}
-        </div>
-      </section>
     </div>
   );
 }

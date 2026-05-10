@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom';
 
 const appLinks = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/meal-upload', label: 'Meal Upload' },
-  { to: '/chat', label: 'AI Chat' },
+  { to: '/dashboard', label: 'Home' },
+  { to: '/meal-upload', label: 'Log Meal' },
+  { to: '/chat', label: 'Chat' },
   { to: '/profile', label: 'Profile' },
 ];
 
