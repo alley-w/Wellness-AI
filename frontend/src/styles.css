@@ -434,9 +434,9 @@ h3 {
 .upload-dropzone {
   align-items: center;
   aspect-ratio: 4 / 3;
-  background: #f3eee5;
-  border: 1px dashed #b8ab9a;
-  border-radius: 8px;
+  background: #f5f7fb;
+  border: 1px dashed #b9c0cf;
+  border-radius: 12px;
   cursor: pointer;
   display: grid;
   justify-items: center;
@@ -455,8 +455,57 @@ h3 {
 }
 
 .upload-dropzone span {
-  color: #60706d;
+  color: #707080;
   font-weight: 800;
+}
+
+.upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.file-action-button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dedee5;
+  border-radius: 10px;
+  color: #101014;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.98rem;
+  font-weight: 800;
+  justify-content: center;
+  line-height: 1;
+  min-height: 3rem;
+  padding: 0.85rem 1rem;
+  text-align: center;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+  user-select: none;
+}
+
+.file-action-button:hover {
+  background: #f5f7fb;
+  border-color: #cfd4df;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+.file-action-button:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.14);
+}
+
+.file-action-button input {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
 }
 
 .food-tags {

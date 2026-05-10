@@ -11,6 +11,13 @@ export default function MealUploadPage() {
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
 
+  function handleFileSelect(event) {
+    const selectedFile = event.target.files?.[0] || null;
+    setFile(selectedFile);
+    setResult(null);
+    setMessage(selectedFile ? `Ready to analyze ${selectedFile.name}.` : '');
+  }
+
   async function analyzeMeal() {
     if (!file) {
       setMessage('Choose a meal photo first.');
@@ -44,9 +51,19 @@ export default function MealUploadPage() {
           <p>Upload a food image and WellBeeing will estimate nutrition while leaving room for your edits.</p>
         </div>
         <label className="upload-dropzone">
-          <input type="file" accept="image/*" onChange={(event) => setFile(event.target.files?.[0] || null)} />
+          <input type="file" accept="image/*" onChange={handleFileSelect} />
           {previewUrl ? <img src={previewUrl} alt="Selected meal preview" /> : <span>Choose food image</span>}
         </label>
+        <div className="upload-actions">
+          <label className="file-action-button">
+            Choose From Photos
+            <input type="file" accept="image/*" onChange={handleFileSelect} />
+          </label>
+          <label className="file-action-button">
+            Use Camera
+            <input type="file" accept="image/*" capture="environment" onChange={handleFileSelect} />
+          </label>
+        </div>
         <div className="button-row">
           <button type="button" onClick={analyzeMeal} disabled={loading}>
             {loading ? 'Analyzing...' : result ? 'Retry Analysis' : 'Analyze Meal'}
