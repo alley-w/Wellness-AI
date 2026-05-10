@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import ChatBox from '../components/ChatBox.jsx';
-import { DEFAULT_USER_ID, getMemory, sendChatMessage } from '../services/api.js';
+import { getMemory, sendChatMessage } from '../services/api.js';
+import { useSession } from '../context/SessionProvider.jsx';
+import { getStoredChatMessages, setStoredChatMessages } from '../services/wellmemorySession.js';
 
 const starterMessages = [
   {
@@ -10,35 +12,36 @@ const starterMessages = [
   },
 ];
 
-const CHAT_DRAFT_KEY = 'wellbeeingChatDraft';
-
-function readChatDraft() {
-  try {
-    return JSON.parse(localStorage.getItem(CHAT_DRAFT_KEY)) || {};
-  } catch {
-    return {};
-  }
-}
-
 export default function AIChatPage() {
-  const draft = readChatDraft();
-  const [messages, setMessages] = useState(draft.messages || starterMessages);
-  const [input, setInputState] = useState(draft.input || '');
+  const { userId } = useSession();
+  const [messages, setMessages] = useState(starterMessages);
+  const [input, setInputState] = useState('');
   const [sending, setSending] = useState(false);
   const [memory, setMemory] = useState(null);
+  const [chatReady, setChatReady] = useState(false);
 
   useEffect(() => {
-    getMemory(DEFAULT_USER_ID).then(setMemory);
-  }, []);
+    if (!userId) {
+      return;
+    }
+    const stored = getStoredChatMessages(userId);
+    setMessages(stored.length ? stored : starterMessages);
+    setChatReady(true);
+  }, [userId]);
 
-  function saveChatDraft(nextMessages = messages, nextInput = input) {
-    localStorage.setItem(CHAT_DRAFT_KEY, JSON.stringify({ messages: nextMessages, input: nextInput }));
-  }
+  useEffect(() => {
+    if (!userId || !chatReady) {
+      return;
+    }
+    setStoredChatMessages(userId, messages);
+  }, [userId, messages, chatReady]);
 
-  function setInput(value) {
-    setInputState(value);
-    saveChatDraft(messages, value);
-  }
+  useEffect(() => {
+    if (!userId) {
+      return;
+    }
+    getMemory(userId).then(setMemory);
+  }, [userId]);
 
   async function handleSend() {
     const text = input.trim();
@@ -49,19 +52,17 @@ export default function AIChatPage() {
     const userMessage = { id: `user-${Date.now()}`, role: 'user', text };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
-    saveChatDraft(nextMessages, '');
     setInputState('');
     setSending(true);
 
-    const response = await sendChatMessage(DEFAULT_USER_ID, text);
-    setMessages((current) => {
-      const updatedMessages = [
-        ...current,
-        { id: `assistant-${Date.now()}`, role: 'assistant', text: response.reply || response.message || 'I am here with you.' },
-      ];
-      saveChatDraft(updatedMessages, '');
-      return updatedMessages;
-    });
+    const response = await sendChatMessage(userId, text);
+    const assistantTurn = {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant',
+      text: response.reply || response.message || 'I am here with you.',
+    };
+    setMessages((current) => [...current, assistantTurn]);
+
     setSending(false);
   }
 
@@ -72,9 +73,23 @@ export default function AIChatPage() {
   ];
   const recentInsight = memory?.recentInsights?.[0] || 'Loading your saved wellness context...';
 
+  if (!userId || !chatReady) {
+    return (
+      <div className="page chat-layout">
+        <p className="soft-note">Loading chat…</p>
+      </div>
+    );
+  }
+
   return (
     <div className="page chat-layout">
-      <ChatBox messages={messages} input={input} setInput={setInput} onSend={handleSend} sending={sending} />
+      <ChatBox
+        messages={messages}
+        input={input}
+        setInput={setInputState}
+        onSend={handleSend}
+        sending={sending}
+      />
       <aside className="panel memory-card">
         <div>
           <p className="eyebrow">Memory Snapshot</p>

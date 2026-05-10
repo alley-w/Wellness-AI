@@ -124,27 +124,20 @@ router.post(
         return res.status(400).json({ error: "Missing or invalid userId." });
       }
       if (!req.file || !req.file.buffer) {
-        return res
-          .status(400)
-          .json({ error: "Missing image file (use form field name: image)." });
+        return res.status(400).json({ error: "image is required" });
       }
 
-      const result = await analyzeMealPhoto({ userId }, req.file);
+      const result = await analyzeMealPhoto({
+        userId,
+        imageBuffer: req.file.buffer,
+        mimeType: req.file.mimetype,
+        originalName: req.file.originalname,
+      });
       return res.json(result);
-    } catch (_error) {
-      return res.status(200).json({
-        foodItems: [],
-        calories: 0,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-        confidence: "low",
-        notes:
-          "Could not complete meal analysis. Try again with a clearer photo or smaller file.",
-        personalizedSuggestion:
-          "A short walk or glass of water after eating is a simple supportive habit.",
-        memoryUsed: [],
-        source: "mock-fallback",
+    } catch (err) {
+      console.error("[aiRoutes] analyze-meal-photo", err);
+      return res.status(500).json({
+        error: err.message || "Meal analysis failed.",
       });
     }
   }

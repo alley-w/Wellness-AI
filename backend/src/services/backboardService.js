@@ -29,18 +29,18 @@ const GOAL_ANALYSIS_SYSTEM_PROMPT = [
 
 const MEAL_PHOTO_ANALYSIS_SYSTEM_PROMPT = [
   WELLNESS_SYSTEM_PROMPT,
-  "You estimate what is on a meal photo for a wellness logging app. This is not medical or dietary prescription.",
-  "Portions are always estimated from a 2D image — state uncertainty clearly; never claim exact or perfect accuracy.",
-  "Use confidence \"high\" only when foods and rough portion scale are fairly clear; otherwise use \"medium\" or \"low\".",
-  "If lighting, angle, blur, or occlusions make the meal unclear, prefer \"low\" or \"medium\" and say so in notes.",
-  "If user memory mentions allergies or intolerances, mention them only as gentle caution (e.g. verify ingredients, read labels) — not diagnosis or emergency advice.",
-  "Use the memory snippets to personalize personalizedSuggestion (preferences, protein goals, energy, movement style, etc.).",
-  "Respond with one JSON object only (no markdown). Keys and types:",
-  "foodItems: string[] (identified foods, best effort),",
-  "calories: number (rough total), protein, carbs, fat: numbers (grams, rough),",
-  "confidence: exactly one of low, medium, high,",
-  "notes: one concise string (limitations, portion guess, what you could not see),",
-  "personalizedSuggestion: one short supportive practical string.",
+  "You analyze the USER'S ATTACHED meal photo for a wellness logging app demo.",
+  "Do not give medical advice, diagnoses, treatment, supplements, or emergency instructions.",
+  "Estimate from the image only. Portions and sauces cannot be verified from a photo — state uncertainty plainly.",
+  "Return ONE valid JSON object only (no markdown, no code fences, no prose before or after).",
+  "Shape and types:",
+  'foodItems: string[] — foods you visually identify;',
+  'calories: number (rough total energy for THIS plate/bowl/meal estimate only); protein, carbs, fat: numbers in grams;',
+  'confidence: number STRICTLY between 0 and 1 (e.g. 0.78). Higher only when composition and approximate scale seem clear;',
+  'notes: string — what is uncertain or occluded;',
+  'personalizedSuggestion: string — short, practical wellness habit tip (may reference preferences in provided memory snippets if relevant);',
+  'memoryUsed: string[] OPTIONAL — identifiers or short echoes of snippets you actually leaned on;',
+  'If unsure on a numeric field, make a cautious estimate and explain in notes.',
 ].join(" ");
 
 const CHAT_MEMORY_SYSTEM_PROMPT = [
@@ -249,10 +249,52 @@ function heuristicStructuredMemory(memory, meals, workouts) {
   };
 }
 
+function buildMealDerivedNutritionPatterns(meals) {
+  const arr = asArray(meals);
+  if (!arr.length) {
+    return [];
+  }
+  let protein = 0;
+  let carbs = 0;
+  let fat = 0;
+  let calories = 0;
+  for (const meal of arr) {
+    protein += Number(meal.protein) || 0;
+    carbs += Number(meal.carbs) || 0;
+    fat += Number(meal.fat) || 0;
+    calories += Number(meal.calories) || 0;
+  }
+  const patterns = [
+    `Logged ${arr.length} meal(s).`,
+    `Total logged protein: ${Math.round(protein)}g.`,
+    `Total logged carbs: ${Math.round(carbs)}g.`,
+    `Total logged fat: ${Math.round(fat)}g.`,
+  ];
+  if (calories > 0) {
+    patterns.push(`Total logged calories: ${Math.round(calories)}.`);
+  }
+  return patterns;
+}
+
+function buildWorkoutConsistencyLine(workouts) {
+  const plans = asArray(workouts);
+  const completed = plans.filter(
+    (plan) => plan.completed === true || plan.status === "completed"
+  );
+  if (completed.length > 0) {
+    return `You completed ${completed.length} workout(s).`;
+  }
+  if (plans.length > 0) {
+    return "You have workout suggestions ready to complete.";
+  }
+  return "Workout rhythm is just getting started.";
+}
+
 function heuristicGeneralReport(userId, memory, meals, workouts) {
   const memCount = memory.length;
   const mealCount = meals.length;
   const workoutCount = workouts.length;
+  const derivedMeals = buildMealDerivedNutritionPatterns(meals);
   const summary = pickVariant(String(userId), [
     memCount || mealCount || workoutCount
       ? "Here is a light read on what your logs show so far — progress is allowed to be uneven, and small consistency still counts."
@@ -260,6 +302,35 @@ function heuristicGeneralReport(userId, memory, meals, workouts) {
     "This report stays in wellness territory: habits and patterns, not judgment. Add a note anytime your goals shift.",
     "Think of this as a snapshot for your demo: kind, practical, and grounded in what you have saved.",
   ]);
+
+  const nutritionMerged = dedupeShortStrings(
+    [
+      ...derivedMeals,
+      mealCount > 0
+        ? `Meal entries: ${mealCount} — look for repeats or meal timing you like.`
+        : derivedMeals.length
+          ? null
+          : "No meal logs yet — when you add them, gentle nutrition patterns can appear.",
+    ].filter(Boolean),
+    14
+  );
+
+  const improvementsMerged = dedupeShortStrings(
+    [
+      "Keep entries kind and realistic — one extra log beats a perfect week on paper.",
+      memCount < 3 ? "Consider saving one preference or goal so suggestions stay personal." : null,
+    ].filter(Boolean),
+    6
+  );
+
+  const nextMerged = dedupeShortStrings(
+    [
+      "Pick one anchor this week: a walk slot, a go-to meal, or a stretch break.",
+      "If energy dips, shrink the plan instead of skipping — five minutes still counts.",
+      "Hydration and sleep still underpin most wellness goals; tune gently, not drastically.",
+    ],
+    6
+  );
 
   return {
     summary,
@@ -271,14 +342,9 @@ function heuristicGeneralReport(userId, memory, meals, workouts) {
       ].filter(Boolean),
       6
     ),
-    nutritionPatterns: dedupeShortStrings(
-      [
-        mealCount
-          ? `Meal entries: ${mealCount} — look for repeats or meal timing you like.`
-          : "No meal logs yet — when you add them, gentle nutrition patterns can appear.",
-      ],
-      6
-    ),
+    workoutConsistency: buildWorkoutConsistencyLine(workouts),
+    commonNutritionPatterns: nutritionMerged,
+    nutritionPatterns: nutritionMerged,
     workoutPatterns: dedupeShortStrings(
       [
         workoutCount
@@ -287,23 +353,11 @@ function heuristicGeneralReport(userId, memory, meals, workouts) {
       ],
       6
     ),
-    improvements: dedupeShortStrings(
-      [
-        "Keep entries kind and realistic — one extra log beats a perfect week on paper.",
-        memCount < 3
-          ? "Consider saving one preference or goal so suggestions stay personal."
-          : null,
-      ].filter(Boolean),
-      6
-    ),
-    nextSteps: dedupeShortStrings(
-      [
-        "Pick one anchor this week: a walk slot, a go-to meal, or a stretch break.",
-        "If energy dips, shrink the plan instead of skipping — five minutes still counts.",
-        "Hydration and sleep still underpin most wellness goals; tune gently, not drastically.",
-      ],
-      6
-    ),
+    improvements: improvementsMerged,
+    positiveImprovements: improvementsMerged,
+    nextSteps: nextMerged,
+    suggestedNextSteps: nextMerged,
+    loggedMealCount: mealCount,
     source: "mock-fallback",
   };
 }
@@ -393,13 +447,32 @@ async function fetchUserGeneralReport(userId) {
 
     const parsed = parseJsonFromContent(data.content) || {};
     const fallbackSummary = heuristicGeneralReport(userId, memory, meals, workouts).summary;
+    const derivedMeals = buildMealDerivedNutritionPatterns(meals);
+    const aiNutrition = dedupeShortStrings(asStringArray(parsed.nutritionPatterns), 6);
+    const nutritionMerged = dedupeShortStrings(
+      [...derivedMeals, ...aiNutrition],
+      14
+    );
+    const improvementsList = dedupeShortStrings(asStringArray(parsed.improvements), 6);
+    const nextList = dedupeShortStrings(asStringArray(parsed.nextSteps), 6);
+    const wc =
+      typeof parsed.workoutConsistency === "string" &&
+      parsed.workoutConsistency.trim()
+        ? parsed.workoutConsistency.trim()
+        : buildWorkoutConsistencyLine(workouts);
+
     return {
       summary: (String(parsed.summary || "").trim() || fallbackSummary).slice(0, 1200),
       rememberedHabits: dedupeShortStrings(asStringArray(parsed.rememberedHabits), 6),
-      nutritionPatterns: dedupeShortStrings(asStringArray(parsed.nutritionPatterns), 6),
+      workoutConsistency: wc,
+      commonNutritionPatterns: nutritionMerged,
+      nutritionPatterns: nutritionMerged,
       workoutPatterns: dedupeShortStrings(asStringArray(parsed.workoutPatterns), 6),
-      improvements: dedupeShortStrings(asStringArray(parsed.improvements), 6),
-      nextSteps: dedupeShortStrings(asStringArray(parsed.nextSteps), 6),
+      improvements: improvementsList,
+      positiveImprovements: improvementsList,
+      nextSteps: nextList,
+      suggestedNextSteps: nextList,
+      loggedMealCount: meals.length,
       source: "backboard",
     };
   } catch (error) {
@@ -494,12 +567,32 @@ async function persistGoalMemories(userId, facts) {
   }
 }
 
-function normalizeMealConfidence(value) {
-  const s = String(value || "")
-    .toLowerCase()
-    .trim();
-  if (s === "high" || s === "medium" || s === "low") return s;
-  return "medium";
+/** Map model output to 0–1 for API + frontend (MealResultCard uses Math.round(confidence * 100)). */
+function normalizeConfidenceFraction(value) {
+  if (value == null || value === "") {
+    return 0.55;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    if (value > 1 && value <= 100) {
+      return Math.min(1, Math.max(0, value / 100));
+    }
+    return Math.min(1, Math.max(0, value));
+  }
+  const s = String(value).toLowerCase().trim();
+  if (s === "high") {
+    return 0.85;
+  }
+  if (s === "medium") {
+    return 0.6;
+  }
+  if (s === "low") {
+    return 0.35;
+  }
+  const n = Number.parseFloat(s);
+  if (Number.isFinite(n)) {
+    return n > 1 && n <= 100 ? Math.min(1, n / 100) : Math.min(1, Math.max(0, n));
+  }
+  return 0.55;
 }
 
 function normalizeMealNotes(parsed) {
@@ -513,15 +606,6 @@ function normalizeMealNotes(parsed) {
       .trim();
   }
   return "";
-}
-
-function mealImageToDataUrl(fileLike) {
-  if (!fileLike || !Buffer.isBuffer(fileLike.buffer)) {
-    throw new Error("Missing image buffer");
-  }
-  const mime = fileLike.mimetype || "image/jpeg";
-  const b64 = fileLike.buffer.toString("base64");
-  return `data:${mime};base64,${b64}`;
 }
 
 function buildMealPhotoApiResult(parsed, memoryUsed) {
@@ -550,7 +634,7 @@ function buildMealPhotoApiResult(parsed, memoryUsed) {
       parsed.fat ?? parsed.macros?.fat ?? parsed.macrosEstimate?.fat ?? 0
     ) || 0
   );
-  const confidence = normalizeMealConfidence(parsed.confidence);
+  const confidence = normalizeConfidenceFraction(parsed.confidence);
   const notes =
     normalizeMealNotes(parsed) ||
     "Rough visual estimate only; actual nutrition depends on exact ingredients and portions.";
@@ -558,6 +642,9 @@ function buildMealPhotoApiResult(parsed, memoryUsed) {
     (typeof parsed.personalizedSuggestion === "string" &&
       parsed.personalizedSuggestion.trim()) ||
     "";
+  const memOut = asStringArray(parsed.memoryUsed);
+  const memoryUsedResolved =
+    memOut.length > 0 ? dedupeShortStrings(memOut, 16) : dedupeShortStrings(asStringArray(memoryUsed), 16);
 
   return {
     foodItems,
@@ -568,7 +655,7 @@ function buildMealPhotoApiResult(parsed, memoryUsed) {
     confidence,
     notes,
     personalizedSuggestion,
-    memoryUsed: asStringArray(memoryUsed),
+    memoryUsed: memoryUsedResolved,
   };
 }
 
@@ -735,6 +822,86 @@ async function sendBackboardMessage({
   return data;
 }
 
+/**
+ * Meal photo / vision: send image as multipart attachment (not inlined base64) so we stay under Backboard message limits.
+ * @see https://docs.backboard.io/concepts/messages — files with multipart/form-data
+ */
+async function sendBackboardMessageWithImage({
+  content,
+  systemPrompt = null,
+  jsonOutput = false,
+  memory = "Auto",
+  imageBuffer,
+  mimeType,
+  originalName,
+}) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("Missing BACKBOARD_API_KEY (check backend/.env)");
+  }
+  if (!imageBuffer?.length) {
+    throw new Error("Missing image bytes for Backboard request.");
+  }
+
+  const baseUrl = getBaseUrl().replace(/\/$/, "");
+  const url = `${baseUrl}/threads/messages`;
+
+  const form = new FormData();
+  form.append("content", content);
+  form.append("stream", "false");
+  form.append("json_output", jsonOutput ? "true" : "false");
+  form.append("memory", memory);
+  if (systemPrompt) {
+    form.append("system_prompt", systemPrompt);
+  }
+
+  const safeName = String(originalName || "meal.jpg")
+    .replace(/[^\w.\- ]+/g, "_")
+    .trim()
+    .slice(-120) || "meal.jpg";
+  const type = mimeType && String(mimeType).trim() ? mimeType : "image/jpeg";
+  const uint8 = Buffer.isBuffer(imageBuffer)
+    ? new Uint8Array(imageBuffer.buffer, imageBuffer.byteOffset, imageBuffer.byteLength)
+    : imageBuffer;
+  const blob = new Blob([uint8], { type });
+  form.append("files", blob, safeName);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "X-API-Key": apiKey,
+      },
+      body: form,
+    });
+  } catch (err) {
+    logBackboardError("multipart-network", err, { url });
+    throw err;
+  }
+
+  const text = await response.text();
+  if (!response.ok) {
+    logBackboardError("multipart-http", new Error(`Request failed`), {
+      status: response.status,
+      bodySnippet: truncateForPrompt(text, 400),
+    });
+    throw new Error(`Backboard HTTP ${response.status}: ${truncateForPrompt(text, 200)}`);
+  }
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (err) {
+    logBackboardError("multipart-parse", err, {
+      bodySnippet: truncateForPrompt(text, 300),
+    });
+    throw new Error("Backboard returned non-JSON body");
+  }
+
+  return data;
+}
+
 function createMockAnalysis(user, healthGoal, workoutPreferences) {
   const uid = getUserId(user);
   const prefsText = normalizeWorkoutPreferences(workoutPreferences);
@@ -820,7 +987,7 @@ function createMockMealAnalysis(user, memoryUsed = []) {
     protein,
     carbs,
     fat,
-    confidence: "low",
+    confidence: 0.35,
     notes,
     personalizedSuggestion,
     memoryUsed: mem,
@@ -963,40 +1130,63 @@ async function chatWithAI(user, message, context) {
   }
 }
 
-async function analyzeMealPhoto(user, imageFile) {
-  const userId = getUserId(user);
+async function analyzeMealPhoto({ userId, imageBuffer, mimeType, originalName }) {
+  const user = { userId };
+  const uid = getUserId(user);
   let memoryUsed = [];
 
-  try {
-    const prior = await safeStorageRead(userId);
+  const priorForMemory = async () => {
+    const prior = await safeStorageRead(uid);
     memoryUsed = prior
       .slice(-8)
       .map((m) => memoryItemText(m))
       .filter(Boolean)
       .map((t) => t.slice(0, 400));
+  };
 
-    const dataUrl = mealImageToDataUrl(imageFile);
-    const imageForPrompt = truncateForPrompt(dataUrl, 200000);
+  const apiKey = getApiKey();
+  if (!imageBuffer?.length) {
+    await priorForMemory();
+    const mock = createMockMealAnalysis(user, memoryUsed);
+    mock.notes =
+      `[mock-fallback] No image bytes supplied. ${mock.notes}`.trim();
+    return mock;
+  }
+
+  if (!apiKey) {
+    await priorForMemory();
+    const mock = createMockMealAnalysis(user, memoryUsed);
+    mock.notes =
+      `[mock-fallback] BACKBOARD_API_KEY is not set — image was not analyzed remotely. ${mock.notes}`.trim();
+    return mock;
+  }
+
+  try {
+    await priorForMemory();
 
     const content = [
-      "Meal photo analysis (user uploaded image as data URL).",
-      `userId: ${userId}`,
+      `Meal photo analysis (image attached as file). userId: ${uid}`,
+      "Analyze ONLY the attached meal image.",
       "",
-      "User memory snippets for personalization (may be empty):",
-      truncateForPrompt(JSON.stringify(memoryUsed), 6000),
-      "",
-      "Image (data URL; estimate portions, do not claim perfect accuracy):",
-      imageForPrompt,
+      "User memory snippets (for personalizedSuggestion wording; do NOT invent unstated allergies or medical facts):",
+      truncateForPrompt(JSON.stringify(memoryUsed), 5000),
     ].join("\n");
 
-    const data = await sendBackboardMessage({
+    const data = await sendBackboardMessageWithImage({
       content,
+      imageBuffer,
+      mimeType,
+      originalName,
       systemPrompt: MEAL_PHOTO_ANALYSIS_SYSTEM_PROMPT,
       jsonOutput: true,
       memory: "Auto",
     });
 
-    const parsed = parseJsonFromContent(data.content) || {};
+    const parsed = parseJsonFromContent(data.content);
+    if (!parsed || typeof parsed !== "object") {
+      throw new Error("Model reply was not valid JSON for meal analysis.");
+    }
+
     const built = buildMealPhotoApiResult(parsed, memoryUsed);
     if (!built.personalizedSuggestion.trim() && memoryUsed.length) {
       built.personalizedSuggestion =
@@ -1005,7 +1195,12 @@ async function analyzeMealPhoto(user, imageFile) {
     return { ...built, source: "backboard" };
   } catch (error) {
     logBackboardError("analyzeMealPhoto", error);
-    return createMockMealAnalysis(user, memoryUsed);
+    await priorForMemory();
+    const fallback = createMockMealAnalysis(user, memoryUsed);
+    const reason = truncateForPrompt(error?.message || "unknown_error", 180);
+    fallback.notes =
+      `[mock-fallback] Remote vision did not succeed (${reason}). ${fallback.notes}`.trim();
+    return fallback;
   }
 }
 

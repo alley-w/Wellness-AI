@@ -41,16 +41,6 @@ const mockNutrition = {
   fat: 58,
 };
 
-const mockMealResult = {
-  foodItems: ['Grilled salmon', 'Brown rice', 'Roasted broccoli'],
-  calories: 610,
-  protein: 42,
-  carbs: 54,
-  fat: 25,
-  confidence: 0.86,
-  notes: 'Looks balanced and protein-rich. Sodium may vary depending on sauce or seasoning.',
-};
-
 const mockMemory = {
   rememberedPreferences: ['Prefers savory breakfasts', 'Likes low-impact workouts', 'Avoids peanuts'],
   rememberedGoals: ['Improve energy stability', 'Build strength gradually', 'Plan simple weeknight meals'],
@@ -66,6 +56,7 @@ const mockGeneralReport = {
   commonNutritionPatterns: ['Balanced dinners', 'Occasional low-protein lunches', 'Good produce variety'],
   positiveImprovements: ['More regular movement', 'More filling breakfasts', 'Better awareness of energy dips'],
   suggestedNextSteps: ['Add one planned afternoon snack', 'Keep two simple workout options ready', 'Review hydration on busy days'],
+  loggedMealCount: 0,
 };
 
 function fallbackUser(userData = {}) {
@@ -103,7 +94,44 @@ async function request(path, options = {}, fallback, fallbackMessage = 'Using mo
 }
 
 function requireUserId(userId) {
-  return userId || DEFAULT_USER_ID;
+  if (!userId) {
+    throw new Error('Authenticated request requires userId.');
+  }
+  return userId;
+}
+
+/**
+ * Validates the user exists on the server. Returns null on 404 (no mock fallback).
+ * Throws on network/parse errors so callers can defer to cached session if needed.
+ */
+export async function fetchUserById(userId) {
+  if (!userId) {
+    return null;
+  }
+  const response = await fetch(`${BASE_URL}/users/${encodeURIComponent(userId)}`, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  const text = await response.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('The server returned data that was not valid JSON.');
+    }
+  }
+
+  if (!response.ok) {
+    const message = data?.message || data?.error || `Request failed with status ${response.status}.`;
+    throw new Error(message);
+  }
+
+  return data ?? null;
 }
 
 export async function createUser(userData) {
@@ -183,13 +211,34 @@ export async function completeWorkout(userId, workoutId) {
 }
 
 export async function analyzeMealPhoto(imageFile, userId) {
-  const formData = new FormData();
-  if (imageFile) {
-    formData.append('image', imageFile);
+  if (!imageFile) {
+    throw new Error('Choose a meal photo before analyzing.');
   }
+  const formData = new FormData();
+  formData.append('image', imageFile);
   formData.append('userId', requireUserId(userId));
 
-  return request('/ai/analyze-meal-photo', { method: 'POST', body: formData }, mockMealResult);
+  const response = await fetch(`${BASE_URL}/ai/analyze-meal-photo`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  const text = await response.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('Server returned invalid JSON.');
+    }
+  }
+
+  if (!response.ok) {
+    const msg = typeof data?.error === 'string' ? data.error : `Analysis failed (${response.status}).`;
+    throw new Error(msg);
+  }
+
+  return data ?? {};
 }
 
 export async function saveMeal(mealData) {

@@ -1,24 +1,10 @@
 import { useEffect, useState } from 'react';
 import NutritionPieChart from '../components/NutritionPieChart.jsx';
 import WorkoutSuggestionCard from '../components/WorkoutSuggestionCard.jsx';
-import {
-  completeWorkout,
-  DEFAULT_USER_ID,
-  getDailyNutrition,
-  getDailySummary,
-  getWorkoutSuggestions,
-  regenerateWorkout,
-} from '../services/api.js';
+import { completeWorkout, getDailyNutrition, getDailySummary, getWorkoutSuggestions, regenerateWorkout } from '../services/api.js';
+import { useSession } from '../context/SessionProvider.jsx';
 
 const dashboardCacheKey = (userId) => `wellbeeingDashboard:${userId}`;
-
-function getStoredUserId() {
-  try {
-    return JSON.parse(localStorage.getItem('wellbeeingUser'))?.id || DEFAULT_USER_ID;
-  } catch {
-    return DEFAULT_USER_ID;
-  }
-}
 
 function readCachedDashboard(userId) {
   try {
@@ -29,7 +15,7 @@ function readCachedDashboard(userId) {
 }
 
 export default function DashboardPage() {
-  const userId = getStoredUserId();
+  const { userId } = useSession();
   const cachedDashboard = readCachedDashboard(userId);
   const [summary, setSummary] = useState(cachedDashboard.summary || null);
   const [nutrition, setNutrition] = useState(cachedDashboard.nutrition || null);
@@ -37,6 +23,9 @@ export default function DashboardPage() {
   const [busyWorkout, setBusyWorkout] = useState('');
 
   useEffect(() => {
+    if (!userId) {
+      return;
+    }
     async function loadDashboard() {
       const [summaryData, nutritionData, workoutData] = await Promise.all([
         getDailySummary(userId),
@@ -52,6 +41,9 @@ export default function DashboardPage() {
   }, [userId]);
 
   useEffect(() => {
+    if (!userId) {
+      return;
+    }
     localStorage.setItem(dashboardCacheKey(userId), JSON.stringify({ summary, nutrition, workouts }));
   }, [userId, summary, nutrition, workouts]);
 

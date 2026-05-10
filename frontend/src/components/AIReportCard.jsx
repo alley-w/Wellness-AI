@@ -4,14 +4,26 @@ export default function AIReportCard({ report }) {
   }
 
   const habits = report.rememberedHabits || [];
-  const patterns = report.commonNutritionPatterns || [];
-  const improvements = report.positiveImprovements || [];
-  const nextStep = report.suggestedNextSteps?.[0] || 'Keep one simple routine repeatable this week.';
+  const patterns =
+    report.commonNutritionPatterns?.length > 0
+      ? report.commonNutritionPatterns
+      : report.nutritionPatterns || [];
+
+  const loggedMealCount =
+    typeof report.loggedMealCount === 'number' && report.loggedMealCount >= 0
+      ? report.loggedMealCount
+      : (() => {
+          const match = patterns[0]?.match(/logged\s+(\d+)\s+meal/i);
+          return match ? Number(match[1]) : 0;
+        })();
+
+  const nextStep =
+    report.suggestedNextSteps?.[0] || report.nextSteps?.[0] || 'Keep one simple routine repeatable this week.';
 
   const visualMetrics = [
     { label: 'Habits remembered', value: habits.length, percent: 82, tone: 'blue' },
     { label: 'Workout rhythm', value: 'Steady', percent: 68, tone: 'green' },
-    { label: 'Nutrition patterns', value: patterns.length, percent: 74, tone: 'orange' },
+    { label: 'Nutrition patterns', value: loggedMealCount, percent: 74, tone: 'orange' },
   ];
 
   return (
@@ -44,9 +56,9 @@ export default function AIReportCard({ report }) {
           </div>
         </div>
         <div>
-          <h3>Wins</h3>
+          <h3>Nutrition patterns</h3>
           <div className="pill-list">
-            {improvements.slice(0, 3).map((item) => (
+            {patterns.slice(0, 8).map((item) => (
               <span key={item}>{item}</span>
             ))}
           </div>

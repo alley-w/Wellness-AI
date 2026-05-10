@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import MealResultCard from '../components/MealResultCard.jsx';
-import { analyzeMealPhoto, DEFAULT_USER_ID, saveMeal } from '../services/api.js';
+import { analyzeMealPhoto, saveMeal } from '../services/api.js';
+import { useSession } from '../context/SessionProvider.jsx';
 
 const MEAL_UPLOAD_DRAFT_KEY = 'wellbeeingMealUploadDraft';
+const MEALS_CHANGED = 'wellmemory:meals-changed';
 
 function readMealDraft() {
   try {
@@ -13,6 +15,7 @@ function readMealDraft() {
 }
 
 export default function MealUploadPage() {
+  const { userId } = useSession();
   const draft = readMealDraft();
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(draft.result || null);
@@ -36,13 +39,22 @@ export default function MealUploadPage() {
       setMessage('Choose a meal photo first.');
       return;
     }
+    if (!userId) {
+      setMessage('Session not ready. Complete onboarding first.');
+      return;
+    }
 
     setLoading(true);
     setMessage('');
-    const mealResult = await analyzeMealPhoto(file, DEFAULT_USER_ID);
-    setResult(mealResult);
-    localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result: mealResult, message: '' }));
-    setLoading(false);
+    try {
+      const mealResult = await analyzeMealPhoto(file, userId);
+      setResult(mealResult);
+      localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result: mealResult, message: '' }));
+    } catch (err) {
+      setMessage(err.message || 'Could not analyze this photo. Try a smaller image or try again.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   function updateResult(field, value) {
@@ -55,7 +67,8 @@ export default function MealUploadPage() {
 
   async function handleSave() {
     setSaving(true);
-    await saveMeal({ ...result, userId: DEFAULT_USER_ID, loggedAt: new Date().toISOString() });
+    await saveMeal({ ...result, userId, loggedAt: new Date().toISOString() });
+    window.dispatchEvent(new CustomEvent(MEALS_CHANGED));
     const savedMessage = 'Meal saved. Your memory has one more useful pattern.';
     setMessage(savedMessage);
     localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result, message: savedMessage }));

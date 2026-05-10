@@ -26,14 +26,25 @@ export default function MealResultCard({ result, onChange, onSave, saving }) {
           </label>
         ))}
       </div>
+      {result.personalizedSuggestion && (
+        <p className="soft-note">
+          <strong>Suggestion:</strong> {result.personalizedSuggestion}
+        </p>
+      )}
       <div className="soft-note">
         <strong>Confidence:</strong> {confidenceLabel}
         <br />
+        {result.source && (
+          <>
+            <strong>Source:</strong> {result.source}
+            <br />
+          </>
+        )}
         {result.notes}
         {result.source === 'mock-fallback' && (
           <>
             <br />
-            Local estimate shown because the remote AI service is not connected.
+            This result is an offline fallback and may not reflect the photo you uploaded until vision succeeds.
           </>
         )}
       </div>

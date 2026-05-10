@@ -54,7 +54,7 @@ export default function OnboardingPage({ onComplete }) {
       localStorage.setItem('wellbeeingUser', JSON.stringify(createdUser));
       localStorage.setItem('wellbeeingGoalSummary', JSON.stringify(goalSummary));
       localStorage.removeItem(ONBOARDING_DRAFT_KEY);
-      onComplete?.();
+      onComplete?.(createdUser);
       navigate('/dashboard');
     } catch (submitError) {
       setError(submitError.message || 'Something went wrong while creating your profile.');
