@@ -10,6 +10,8 @@ import {
   regenerateWorkout,
 } from '../services/api.js';
 
+const dashboardCacheKey = (userId) => `wellbeeingDashboard:${userId}`;
+
 function getStoredUserId() {
   try {
     return JSON.parse(localStorage.getItem('wellbeeingUser'))?.id || DEFAULT_USER_ID;
@@ -18,12 +20,21 @@ function getStoredUserId() {
   }
 }
 
+function readCachedDashboard(userId) {
+  try {
+    return JSON.parse(localStorage.getItem(dashboardCacheKey(userId))) || {};
+  } catch {
+    return {};
+  }
+}
+
 export default function DashboardPage() {
-  const [summary, setSummary] = useState(null);
-  const [nutrition, setNutrition] = useState(null);
-  const [workouts, setWorkouts] = useState([]);
-  const [busyWorkout, setBusyWorkout] = useState('');
   const userId = getStoredUserId();
+  const cachedDashboard = readCachedDashboard(userId);
+  const [summary, setSummary] = useState(cachedDashboard.summary || null);
+  const [nutrition, setNutrition] = useState(cachedDashboard.nutrition || null);
+  const [workouts, setWorkouts] = useState(cachedDashboard.workouts || []);
+  const [busyWorkout, setBusyWorkout] = useState('');
 
   useEffect(() => {
     async function loadDashboard() {
@@ -40,6 +51,10 @@ export default function DashboardPage() {
     loadDashboard();
   }, [userId]);
 
+  useEffect(() => {
+    localStorage.setItem(dashboardCacheKey(userId), JSON.stringify({ summary, nutrition, workouts }));
+  }, [userId, summary, nutrition, workouts]);
+
   async function handleComplete(workoutId) {
     setBusyWorkout(workoutId);
     await completeWorkout(userId, workoutId);
@@ -50,7 +65,9 @@ export default function DashboardPage() {
   async function handleRegenerate(workoutId) {
     setBusyWorkout(workoutId);
     const newWorkout = await regenerateWorkout(userId, workoutId);
-    setWorkouts((current) => current.map((workout) => (workout.id === workoutId ? newWorkout : workout)));
+    setWorkouts((current) =>
+      current.map((workout) => (workout.id === workoutId ? { ...newWorkout, completed: false } : workout)),
+    );
     setBusyWorkout('');
   }
 

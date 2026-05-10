@@ -13,14 +13,28 @@ const initialForm = {
   workoutPreferences: '',
 };
 
+const ONBOARDING_DRAFT_KEY = 'wellbeeingOnboardingDraft';
+
+function readOnboardingDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(ONBOARDING_DRAFT_KEY)) || initialForm;
+  } catch {
+    return initialForm;
+  }
+}
+
 export default function OnboardingPage({ onComplete }) {
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] = useState(readOnboardingDraft);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   function updateField(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => {
+      const next = { ...current, [field]: value };
+      localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(next));
+      return next;
+    });
   }
 
   async function handleSubmit(event) {
@@ -39,6 +53,7 @@ export default function OnboardingPage({ onComplete }) {
       const goalSummary = await analyzeGoals(createdUser.id, form.healthGoal);
       localStorage.setItem('wellbeeingUser', JSON.stringify(createdUser));
       localStorage.setItem('wellbeeingGoalSummary', JSON.stringify(goalSummary));
+      localStorage.removeItem(ONBOARDING_DRAFT_KEY);
       onComplete?.();
       navigate('/dashboard');
     } catch (submitError) {

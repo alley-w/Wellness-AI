@@ -2,12 +2,23 @@ import { useMemo, useState } from 'react';
 import MealResultCard from '../components/MealResultCard.jsx';
 import { analyzeMealPhoto, DEFAULT_USER_ID, saveMeal } from '../services/api.js';
 
+const MEAL_UPLOAD_DRAFT_KEY = 'wellbeeingMealUploadDraft';
+
+function readMealDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(MEAL_UPLOAD_DRAFT_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
 export default function MealUploadPage() {
+  const draft = readMealDraft();
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(draft.result || null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState(draft.message || '');
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ''), [file]);
 
@@ -15,7 +26,9 @@ export default function MealUploadPage() {
     const selectedFile = event.target.files?.[0] || null;
     setFile(selectedFile);
     setResult(null);
-    setMessage(selectedFile ? `Ready to analyze ${selectedFile.name}.` : '');
+    const nextMessage = selectedFile ? `Ready to analyze ${selectedFile.name}.` : '';
+    setMessage(nextMessage);
+    localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result: null, message: nextMessage }));
   }
 
   async function analyzeMeal() {
@@ -28,17 +41,24 @@ export default function MealUploadPage() {
     setMessage('');
     const mealResult = await analyzeMealPhoto(file, DEFAULT_USER_ID);
     setResult(mealResult);
+    localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result: mealResult, message: '' }));
     setLoading(false);
   }
 
   function updateResult(field, value) {
-    setResult((current) => ({ ...current, [field]: value }));
+    setResult((current) => {
+      const next = { ...current, [field]: value };
+      localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result: next, message }));
+      return next;
+    });
   }
 
   async function handleSave() {
     setSaving(true);
     await saveMeal({ ...result, userId: DEFAULT_USER_ID, loggedAt: new Date().toISOString() });
-    setMessage('Meal saved. Your memory has one more useful pattern.');
+    const savedMessage = 'Meal saved. Your memory has one more useful pattern.';
+    setMessage(savedMessage);
+    localStorage.setItem(MEAL_UPLOAD_DRAFT_KEY, JSON.stringify({ result, message: savedMessage }));
     setSaving(false);
   }
 

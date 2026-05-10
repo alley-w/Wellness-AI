@@ -116,6 +116,26 @@ function saveWorkoutPlan(userId, workout) {
   return plan;
 }
 
+function replaceWorkoutPlan(userId, workoutId, workout) {
+  const current = getWorkoutsByUserId(userId);
+  const plan = {
+    ...workout,
+    id: workout.id || makeId("workout"),
+  };
+  const index = current.findIndex(
+    (item) => item.id === workoutId || item.workoutId === workoutId
+  );
+
+  if (index === -1) {
+    current.push(plan);
+  } else {
+    current[index] = plan;
+  }
+
+  workoutsByUserId.set(userId, current);
+  return plan;
+}
+
 function getWorkoutPlansByUser(userId) {
   return getWorkoutsByUserId(userId);
 }
@@ -194,6 +214,7 @@ module.exports = {
   getWorkoutsByUserId,
   getWorkoutPlansByUser,
   saveWorkoutPlan,
+  replaceWorkoutPlan,
   updateWorkoutStatus,
   importUserSnapshot,
 };

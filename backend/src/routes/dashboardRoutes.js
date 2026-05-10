@@ -154,6 +154,7 @@ router.post('/:userId/workout-plan/complete', (req, res) => {
 
 // POST /api/users/:userId/workout-plan/regenerate
 router.post('/:userId/workout-plan/regenerate', (req, res) => {
+  const { workoutId } = req.body || {};
   const user = storage.getUser(req.params.userId);
 
   if (!user) {
@@ -173,7 +174,7 @@ router.post('/:userId/workout-plan/regenerate', (req, res) => {
     source: 'mock-fallback'
   };
 
-  storage.saveWorkoutPlan(req.params.userId, workout);
+  storage.replaceWorkoutPlan(req.params.userId, workoutId, workout);
 
   // Return the workout object directly because Person 1 fallback expects a direct workout object.
   res.json(workout);

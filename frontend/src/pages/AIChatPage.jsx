@@ -10,15 +10,35 @@ const starterMessages = [
   },
 ];
 
+const CHAT_DRAFT_KEY = 'wellbeeingChatDraft';
+
+function readChatDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(CHAT_DRAFT_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+
 export default function AIChatPage() {
-  const [messages, setMessages] = useState(starterMessages);
-  const [input, setInput] = useState('');
+  const draft = readChatDraft();
+  const [messages, setMessages] = useState(draft.messages || starterMessages);
+  const [input, setInputState] = useState(draft.input || '');
   const [sending, setSending] = useState(false);
   const [memory, setMemory] = useState(null);
 
   useEffect(() => {
     getMemory(DEFAULT_USER_ID).then(setMemory);
   }, []);
+
+  function saveChatDraft(nextMessages = messages, nextInput = input) {
+    localStorage.setItem(CHAT_DRAFT_KEY, JSON.stringify({ messages: nextMessages, input: nextInput }));
+  }
+
+  function setInput(value) {
+    setInputState(value);
+    saveChatDraft(messages, value);
+  }
 
   async function handleSend() {
     const text = input.trim();
@@ -27,15 +47,21 @@ export default function AIChatPage() {
     }
 
     const userMessage = { id: `user-${Date.now()}`, role: 'user', text };
-    setMessages((current) => [...current, userMessage]);
-    setInput('');
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+    saveChatDraft(nextMessages, '');
+    setInputState('');
     setSending(true);
 
     const response = await sendChatMessage(DEFAULT_USER_ID, text);
-    setMessages((current) => [
-      ...current,
-      { id: `assistant-${Date.now()}`, role: 'assistant', text: response.reply || response.message || 'I am here with you.' },
-    ]);
+    setMessages((current) => {
+      const updatedMessages = [
+        ...current,
+        { id: `assistant-${Date.now()}`, role: 'assistant', text: response.reply || response.message || 'I am here with you.' },
+      ];
+      saveChatDraft(updatedMessages, '');
+      return updatedMessages;
+    });
     setSending(false);
   }
 

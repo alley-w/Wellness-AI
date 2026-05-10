@@ -3,14 +3,21 @@ import AIReportCard from '../components/AIReportCard.jsx';
 import ProfileForm from '../components/ProfileForm.jsx';
 import { DEFAULT_USER_ID, getGeneralReport, getUser, updateUser } from '../services/api.js';
 
+const PROFILE_DRAFT_KEY = 'wellbeeingProfileDraft';
+
+function readStoredObject(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key)) || {};
+  } catch {
+    return {};
+  }
+}
+
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('wellbeeingUser')) || {};
-    } catch {
-      return {};
-    }
-  });
+  const [profile, setProfile] = useState(() => ({
+    ...readStoredObject('wellbeeingUser'),
+    ...readStoredObject(PROFILE_DRAFT_KEY),
+  }));
   const [report, setReport] = useState(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,7 +33,11 @@ export default function ProfilePage() {
   }, []);
 
   function updateField(field, value) {
-    setProfile((current) => ({ ...current, [field]: value }));
+    setProfile((current) => {
+      const next = { ...current, [field]: value };
+      localStorage.setItem(PROFILE_DRAFT_KEY, JSON.stringify(next));
+      return next;
+    });
   }
 
   async function handleSubmit(event) {
@@ -40,6 +51,7 @@ export default function ProfilePage() {
     });
     setProfile(updated);
     localStorage.setItem('wellbeeingUser', JSON.stringify(updated));
+    localStorage.removeItem(PROFILE_DRAFT_KEY);
     setMessage('Profile saved. Your future suggestions will use these details.');
     setSaving(false);
   }

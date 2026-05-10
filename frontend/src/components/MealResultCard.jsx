@@ -4,6 +4,8 @@ export default function MealResultCard({ result, onChange, onSave, saving }) {
   }
 
   const editableFields = ['calories', 'protein', 'carbs', 'fat'];
+  const confidenceLabel =
+    typeof result.confidence === 'number' ? `${Math.round(result.confidence * 100)}%` : result.confidence || 'unknown';
 
   return (
     <section className="panel meal-result">
@@ -25,9 +27,15 @@ export default function MealResultCard({ result, onChange, onSave, saving }) {
         ))}
       </div>
       <div className="soft-note">
-        <strong>Confidence:</strong> {Math.round((result.confidence || 0) * 100)}%
+        <strong>Confidence:</strong> {confidenceLabel}
         <br />
         {result.notes}
+        {result.source === 'mock-fallback' && (
+          <>
+            <br />
+            Local estimate shown because the remote AI service is not connected.
+          </>
+        )}
       </div>
       <button type="button" onClick={onSave} disabled={saving}>
         {saving ? 'Saving...' : 'Save Meal'}
