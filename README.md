@@ -199,6 +199,12 @@ This project is open source. See LICENSE file for details.
 
 Created by [alley-w](https://github.com/alley-w)
 
+## 🤝 Collaborators
+
+- [alley-w](https://github.com/alley-w)
+- [JadeZ06](https://github.com/JadeZ06)
+- [RuiyaSun6](https://github.com/RuiyaSun6)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Feel free to open issues or submit pull requests to improve the project.
