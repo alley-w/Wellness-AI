@@ -1,4 +1,4 @@
-# Wellness-AI
+# WellBeeing
 
 A full-stack AI-powered wellness application that helps users track their health, nutrition, and fitness goals with intelligent insights and personalized recommendations.
 
